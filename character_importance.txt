@@ -1,0 +1,15 @@
+CHARACTER IMPORTANCE ANALYSIS
+=============================
+
+1. Harry
+   Appearances: 12
+   Role: 👤 MINOR CHARACTER
+
+2. Ron
+   Appearances: 9
+   Role: 👤 MINOR CHARACTER
+
+3. Hermione
+   Appearances: 6
+   Role: 👤 MINOR CHARACTER
+
