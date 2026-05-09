@@ -1,15 +1,19 @@
 CHARACTER IMPORTANCE ANALYSIS
 =============================
 
-1. Harry
-   Appearances: 12
-   Role: 👤 MINOR CHARACTER
+1. Elizabeth
+   Appearances: 594
+   Role: ⭐ MAIN PROTAGONIST
 
-2. Ron
-   Appearances: 9
-   Role: 👤 MINOR CHARACTER
+2. Darcy
+   Appearances: 377
+   Role: ⭐ MAIN PROTAGONIST
 
-3. Hermione
-   Appearances: 6
-   Role: 👤 MINOR CHARACTER
+3. Jane
+   Appearances: 264
+   Role: ⭐ MAIN PROTAGONIST
+
+4. Bingley
+   Appearances: 262
+   Role: ⭐ MAIN PROTAGONIST
 

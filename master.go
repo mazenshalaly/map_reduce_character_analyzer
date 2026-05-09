@@ -9,6 +9,9 @@ import (
     "strings"
     "sync"
     "time"
+    
+    // Add PDF library
+    "github.com/ledongthuc/pdf"
 )
 
 // Slave configuration - EDIT THESE FOR YOUR NETWORK
@@ -16,6 +19,7 @@ var slaves = map[string]string{
     "slave-1": "http://localhost:8081",
     "slave-2": "http://localhost:8082",
     "slave-3": "http://localhost:8083",
+    // Add more slaves as needed
 }
 
 type Master struct {
@@ -42,14 +46,66 @@ func NewMaster() *Master {
     }
 }
 
-// Split novel into chunks
-func (m *Master) splitFile(filename string, chunkSize int) error {
-    data, err := os.ReadFile(filename)
+// Extract text from PDF file
+func (m *Master) extractTextFromPDF(filename string) (string, error) {
+    file, err := os.Open(filename)
     if err != nil {
-        return err
+        return "", err
+    }
+    defer file.Close()
+
+    // Get file info
+    fileInfo, err := file.Stat()
+    if err != nil {
+        return "", err
     }
 
-    content := string(data)
+    // Open PDF
+    pdfReader, err := pdf.NewReader(file, fileInfo.Size())
+    if err != nil {
+        return "", err
+    }
+
+    var text string
+    // Extract text from each page
+    for i := 1; i <= pdfReader.NumPage(); i++ {
+        page := pdfReader.Page(i)
+        if page.V.IsNull() {
+            continue
+        }
+        
+        pageText, err := page.GetPlainText(nil)
+        if err != nil {
+            continue
+        }
+        text += pageText + " "
+    }
+
+    return text, nil
+}
+
+// Split novel into chunks
+func (m *Master) splitFile(filename string, chunkSize int) error {
+    // Check if file is PDF or TXT
+    var content string
+    var err error
+    
+    if strings.HasSuffix(strings.ToLower(filename), ".pdf") {
+        fmt.Println("📄 Extracting text from PDF...")
+        content, err = m.extractTextFromPDF(filename)
+        if err != nil {
+            return fmt.Errorf("error extracting PDF: %v", err)
+        }
+        fmt.Printf("✅ Extracted %d characters from PDF\n", len(content))
+    } else {
+        // Handle regular text file
+        data, err := os.ReadFile(filename)
+        if err != nil {
+            return err
+        }
+        content = string(data)
+    }
+
     words := strings.Fields(content)
 
     // Create chunks of approximately chunkSize words
@@ -62,7 +118,7 @@ func (m *Master) splitFile(filename string, chunkSize int) error {
         m.chunks = append(m.chunks, chunk)
     }
 
-    fmt.Printf("📚 Split novel into %d chunks\n", len(m.chunks))
+    fmt.Printf("📚 Split novel into %d chunks (%d words total)\n", len(m.chunks), len(words))
     return nil
 }
 
@@ -80,7 +136,7 @@ func (m *Master) sendMapTask(slaveURL string, chunkID int, chunkData string, cha
         return nil, err
     }
 
-    client := &http.Client{Timeout: 30 * time.Second}
+    client := &http.Client{Timeout: 60 * time.Second} // Increased timeout for larger PDFs
     resp, err := client.Post(slaveURL+"/analyze", "application/json", bytes.NewBuffer(jsonData))
     if err != nil {
         return nil, err
@@ -119,7 +175,7 @@ func (m *Master) distributeWork(characters []string) {
             // Round-robin slave selection
             slaveURL := slaveList[chunkID%len(slaveList)]
 
-            fmt.Printf("📤 Sending chunk %d to %s\n", chunkID, slaveURL)
+            fmt.Printf("📤 Sending chunk %d (%d words) to %s\n", chunkID, len(strings.Fields(chunkData)), slaveURL)
 
             counts, err := m.sendMapTask(slaveURL, chunkID, chunkData, characters)
             if err != nil {
@@ -245,7 +301,8 @@ func main() {
     // Check command line arguments
     if len(os.Args) < 3 {
         fmt.Println("Usage: go run master.go <novel_file> <character1> <character2> ...")
-        fmt.Println("Example: go run master.go novel.txt Harry Ron Hermione")
+        fmt.Println("Example: go run master.go novel.pdf Harry Ron Hermione")
+        fmt.Println("Supports: PDF and TXT files")
         fmt.Println("\nConfigure slave IPs in the 'slaves' map at the top of this file")
         return
     }
@@ -266,7 +323,7 @@ func main() {
 
     master := NewMaster()
 
-    // Split the novel
+    // Split the novel (supports PDF and TXT)
     if err := master.splitFile(novelFile, 1000); err != nil {
         fmt.Printf("❌ Error: %v\n", err)
         return

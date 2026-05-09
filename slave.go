@@ -76,7 +76,7 @@ func (s *Slave) healthHandler(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("OK"))
 }
 
-func main() {
+func main1() {
     // Get port from command line
     if len(os.Args) < 2 {
         fmt.Println("Usage: go run slave.go <port>")
