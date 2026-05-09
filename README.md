@@ -38,7 +38,7 @@ When the analysis is complete, you get a beautiful report that shows:
 - A visual bar showing their frequency compared to others
 
 ### Example Output
-============================================================
+
 📊 CHARACTER IMPORTANCE REPORT
 ============================================================
 
